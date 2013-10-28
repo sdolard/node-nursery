@@ -1,0 +1,26 @@
+{
+    "author": "Sebastien Dolard",
+    "name": "nursery",
+    "description": "A job manager",
+    "version": "0.0.1",
+    "repository": {
+        "type": "git",
+        "url": "git://github.com/sdolard/node-nursery.git"
+    },
+    "scripts": {
+        "pretest": "jsrevival -p \"describe, it\" -o \"ass: false, bitwise: false, browser: false, closure: false, continue: true, couch: false, debug: false, devel: false, eqeq: false, es5: true, evil: false, forin: false, indent: 10, maxerr: 1000, maxlen: 1024, newcap: false, node: true, nomen: true, passfail: false, plusplus: true, properties: false, regexp: false, rhino: false, unparam: false, sloppy: true, stupid: false, sub: false, todo: true, vars: false, white: true\" -r cli-hide-valid -R lib/ test/",
+        "test": "mocha"
+    },
+    "engines": {
+        "node": ">= 0.10.0"
+    },
+    "dependencies": {
+        "cron": "1.0.x",
+        "underscore": "1.4.x",
+        "jsrevival": "0.2.x"
+    },
+    "devDependencies" : {
+        "mocha": "x.x.x",
+        "jsrevival": "0.2.x"
+    }
+}
