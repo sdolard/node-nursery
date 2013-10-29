@@ -15,9 +15,7 @@
         "node": ">= 0.10.0"
     },
     "dependencies": {
-        "cron": "1.0.x",
-        "underscore": "1.4.x",
-        "jsrevival": "0.2.x"
+        "cron": "1.0.x"
     },
     "devDependencies" : {
         "mocha": "x.x.x",
