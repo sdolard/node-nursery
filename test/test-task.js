@@ -8,71 +8,221 @@ assert = require('assert'),
 task = require('../lib/task');
 
 describe('task', function(){
-	// it ('should throw an Exception when creating an empty task', function(done){
-	// 	try {
-	// 		task.create();
-	// 	} catch(err) {
-	// 		assert(err instanceof Error);
-	// 		assert.strictEqual(err.code, 'EINVALIDACTION');
-	// 		assert.strictEqual(err.message, 'action is undefined');
-	// 		done();
-	// 	}
-	// });
+	it ('should have a run config', function(done){
+		try {
+			task.create();
+		} catch(e) {
+			if (e.code === 'EUNDEFINEDRUN') {
+				done();
+			}
+		}
+	});
 
-	// it ('should return an error on taskresult when creating a ping task with no config', function(done){
-	// 	var task = task.create({
-	// 		action: 'ping'
-	// 	});
-	// 	task.on('taskresult', function (err, config, response, task) {
-	// 		/*jslint unparam: true */
-	// 		assert(err instanceof Error);
-	// 		assert.strictEqual(err.code, 'ENOHOST');
-	// 		assert.strictEqual(err.message, 'No host defined');
-	// 		done();
-	// 	});
-	// 	task.run();
-	// });
+	it ('should have a run function config', function(done){
+		try {
+			task.create({
+				run: 5
+			});
+		} catch(e) {
+			if (e.code === 'EINVALIDRUN') {
+				done();
+			}
+		}
+	});
 
-	// it ('should return an error on taskresult when creating a ping task with no config.host', function(done){
-	// 	var task = task.create({
-	// 		action: 'ping',
-	// 		config: {}
-	// 	});
-	// 	task.on('taskresult', function (err, config, response, task) {
-	// 		/*jslint unparam: true */
-	// 		assert(err instanceof Error);
-	// 		assert.strictEqual(err.code, 'ENOHOST');
-	// 		assert.strictEqual(err.message, 'No host defined');
-	// 		done();
-	// 	});
-	// 	task.run();
-	// });
-
-	it ('should run hello world task', function(done){
-		var helloTask = task.create({
-			action: function(id, config, taskDone, log){
-				log("before hello world");
-				console.log("hello world.");
-				log("after hello world");
-				taskDone();
+	it ('should call taskstart event', function(done){
+		var aTask = task.create({
+			run: function (done) {
+				done();
 			},
-			config: {
-				host: 'localhost'
-			},
-			on: {
-				'taskresult': function (err, config, response, task) {
-					/*jslint unparam: true */
-					/*assert.strictEqual(response.exitCode, 0);
-					assert.strictEqual(config.host, 'localhost');
-					assert.strictEqual(config.timeout, 1);
-					assert(!config.ipV6);
-					assert(response.date instanceof Date);
-					assert.equal(typeof response.data, 'string');*/
+			listeners: {
+				'taskstart': function() {
 					done();
 				}
 			}
 		});
-		helloTask.run();
+		aTask.start();
+	});
+
+	it ('should autostart', function(done){
+		task.create({
+			autostart: true,
+			run: function (done) {
+				done();
+			},
+			listeners: {
+				'taskstart': function() {
+					done();
+				}
+			}
+		});
+	});
+
+	it ('should not autostart', function(done){
+		var aTask = task.create({
+			autostart: false,
+			run: function () {
+				return;
+			}
+		});
+		assert(aTask.state === 'neverstarted');
+		done();
+	});
+
+	it ('should log', function(done){
+		task.create({
+			autostart: true,
+			run: function (done, log) {
+				log('a task log');
+			},
+			listeners: {
+				'tasklog': function(log) {
+					assert(log.msg === 'a task log');
+					assert(log.msDuration >= 0);
+					assert(log.date !== undefined);
+					assert(log.date !== null);
+					done();
+				}
+			}
+		});
+	});
+
+	it ('should return a result', function(done){
+		task.create({
+			autostart: true,
+			run: function (done) {
+				done(5);
+			},
+			listeners: {
+				'taskresult': function(err, result) {
+					assert(err === undefined);
+					assert(result === 5);
+					done();
+				}
+			}
+		});
+	});
+
+	it ('should return a Error', function(done){
+		task.create({
+			autostart: true,
+			run: function (done) {
+				done(new Error('This is an error'));
+			},
+			listeners: {
+				'taskresult': function(err, result) {
+					assert(err !== undefined);
+					assert(err.message === 'This is an error');
+					assert(result === undefined);
+					done();
+				}
+			}
+		});
+	});
+
+	it ('should call done event', function(done){
+		task.create({
+			autostart: true,
+			run: function (done) {
+				done();
+			},
+			listeners: {
+				'done': function() {
+					done();
+				}
+			}
+		});
+	});
+
+	it ('should call start, then log, result and done', function(done){
+		var steps = {
+			start: 0,
+			log: 1,
+			result : 2,
+			done: 3
+		},
+		step = 0;
+		task.create({
+			autostart: true,
+			run: function (done, log) {
+				log('foo');
+				done(10);
+			},
+			listeners: {
+				'taskstart': function() {
+					assert(steps.start === step);
+					step++;
+				},
+				'tasklog': function(log) {
+					assert(log.msg === 'foo');
+					assert(steps.log === step);
+					step++;
+				},
+				'taskresult': function(err, result) {
+					assert(result === 10);
+					assert(steps.result === step);
+					step++;
+				},
+				'done': function() {
+					assert(steps.done === step);
+					done();
+				}
+			}
+		});
+	});
+
+	it ('should timeout', function(done){
+		task.create({
+			autostart: true,
+			timeout: 10, // ms
+			run: function (done, log) {
+				return;
+			},
+			listeners: {
+				'taskresult': function(err) {
+					assert(err.message === 'Task timeouted');
+					assert(err.code === 'ETASKTIMEOUTED');
+					assert(err.msDuration >= 10);
+					done();
+				}
+			}
+		});
+	});
+
+	it ('should timeout before run timeout', function(done){
+		task.create({
+			autostart: true,
+			timeout: 1, // ms
+			run: function (taskDone) {
+				setTimeout(function() {
+					taskDone();
+				}, 20);
+			},
+			listeners: {
+				'taskresult': function(err) {
+					assert(err);
+					assert(err.message === 'Task timeouted');
+					assert(err.code === 'ETASKTIMEOUTED');
+					assert(err.msDuration >= 1);
+					done();
+				}
+			}
+		});
+	});
+
+	it ('should called done on timeout', function(done){
+		task.create({
+			autostart: true,
+			timeout: 10, // ms
+			run: function (done, log) {
+				return;
+			},
+			listeners: {
+				'done': function() {
+					done();
+				}
+			}
+		});
 	});
 });
 

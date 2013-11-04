@@ -8,11 +8,8 @@ helloTask = task.create({
     },
     run: function(done, log, task){
         log("before hello world");
-        console.log("id %s", task.id);
-        console.log("config %s", util.inspect(task.data));
         console.log("hello world.");
         log("after hello world");
-        debugger;
         done(new Error('foo error'));
     },
     listeners: {
@@ -28,11 +25,10 @@ helloTask = task.create({
         },
         'tasklog': function (log, task) {
             console.log('task log: %s', log.msg);
-        },
+        }
         'done': function (err) {
             console.log('done');
         }
     }
 });
-debugger;
 helloTask.start();
