@@ -1,29 +1,38 @@
-var 
+/*jslint node: true*/
+var
+util = require('util'),
 task = require('../lib/task'),
 helloTask = task.create({
-    action: function(id, config, taskDone, log){
-        log("before hello world");
-        console.log("hello world.");
-        log("after hello world");
-        taskDone();
-    },
-    config: {
+    data: {
         host: 'localhost'
     },
-    on: {
-        'taskstart': function (err, config, response, task) {
-            console.log('task start');
+    run: function(done, log, task){
+        log("before hello world");
+        console.log("id %s", task.id);
+        console.log("config %s", util.inspect(task.data));
+        console.log("hello world.");
+        log("after hello world");
+        debugger;
+        done(new Error('foo error'));
+    },
+    listeners: {
+        'taskstart': function (task) {
+            console.log('task start: %s', task.id);
         },
-        'taskresult': function (err, config, response, task) {
-            console.log('task result');
+        'taskresult': function (err, result, task) {
+            if (err) {
+                console.log(err);
+                return;
+            }
+            console.log('task result: %s', result);
         },
-        'tasklog': function (err, config, response, task) {
-            console.log('task log');
+        'tasklog': function (log, task) {
+            console.log('task log: %s', log.msg);
         },
-        'done': function (err, config, response, task) {
+        'done': function (err) {
             console.log('done');
         }
     }
 });
 debugger;
-helloTask.run();
+helloTask.start();
