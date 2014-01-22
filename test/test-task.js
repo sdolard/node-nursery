@@ -1,7 +1,7 @@
 /*
 Copyright © 2011-2012 by Sebastien Dolard (sdolard@gmail.com)
 */
-/*jslint node: true */
+/*jslint node: true, unparam: true */
 
 var
 assert = require('assert'),
@@ -196,7 +196,7 @@ describe('task', function(){
 			run: function (taskDone) {
 				setTimeout(function() {
 					taskDone();
-				}, 20);
+				}, 200);
 			},
 			listeners: {
 				'taskresult': function(err) {

@@ -1,4 +1,4 @@
-/*jslint node: true*/
+/*jslint node: true, unparam: true*/
 var
 util = require('util'),
 task = require('../lib/task'),
@@ -18,14 +18,14 @@ helloTask = task.create({
         },
         'taskresult': function (err, result, task) {
             if (err) {
-                console.log(err);
+                console.log('Error: %s', util.inspect(err));
                 return;
             }
             console.log('task result: %s', result);
         },
         'tasklog': function (log, task) {
             console.log('task log: %s', log.msg);
-        }
+        },
         'done': function (err) {
             console.log('done');
         }
