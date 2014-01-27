@@ -1,5 +1,5 @@
 /*
-Copyright © 2011-2012 by Sebastien Dolard (sdolard@gmail.com)
+Copyright ©2014 by Sebastien Dolard (sdolard@gmail.com)
 */
 /*jslint node: true, unparam: true */
 
