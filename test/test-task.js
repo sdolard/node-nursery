@@ -28,6 +28,7 @@ describe('task', function(){
 				done();
 			}
 		});
+		
 		d.run(function(){
 			task.create({
 				run: 5
