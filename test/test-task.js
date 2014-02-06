@@ -5,29 +5,35 @@ Copyright ©2014 by Sebastien Dolard (sdolard@gmail.com)
 
 var
 assert = require('assert'),
+domain = require('domain'),
 task = require('../lib/task');
 
 describe('task', function(){
 	it ('should have a run config', function(done){
-		try {
-			task.create();
-		} catch(e) {
-			if (e.code === 'EUNDEFINEDRUN') {
+		var d = domain.create();
+		d.on('error', function(e) {
+		 	if (e.code === 'EUNDEFINEDRUN') {
 				done();
 			}
-		}
+		});
+		d.run(function(){
+			task.create();
+		});
 	});
 
 	it ('should have a run function config', function(done){
-		try {
+		var d = domain.create();
+		d.on('error', function(e) {
+		 	if (e.code === 'EINVALIDRUN') {
+				done();
+			}
+		});
+		d.run(function(){
 			task.create({
 				run: 5
 			});
-		} catch(e) {
-			if (e.code === 'EINVALIDRUN') {
-				done();
-			}
-		}
+		});
+
 	});
 
 	it ('should call taskstart event', function(done){
@@ -200,7 +206,7 @@ describe('task', function(){
 			},
 			listeners: {
 				'taskresult': function(err) {
-					assert(err);
+					assert(err !== undefined);
 					assert(err.message === 'Task timeouted');
 					assert(err.code === 'ETASKTIMEOUTED');
 					assert(err.msDuration >= 1);
