@@ -11,7 +11,7 @@ module.exports = function(grunt) {
     },
     jsdoc: {
         dist: {
-            src: ['lib/task.js'], 
+            src: ['README.md', 'lib/task.js'], 
             options: {
                 destination: 'doc'
             }
@@ -19,6 +19,6 @@ module.exports = function(grunt) {
     }
   });
 
-  grunt.registerTask('default', ['mochaTest']);
+  grunt.registerTask('default', ['mochaTest', 'jsdoc']);
 
 };

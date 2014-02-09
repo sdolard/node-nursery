@@ -6,7 +6,9 @@ Copyright ©2014 by Sebastien Dolard (sdolard@gmail.com)
 var
 assert = require('assert'),
 domain = require('domain'),
-task = require('../lib/task');
+Task = require('../lib/task');
+
+function unused(a) {return;}
 
 describe('task', function(){
 	it ('should have a run config', function(done){
@@ -17,7 +19,7 @@ describe('task', function(){
 			}
 		});
 		d.run(function(){
-			task.create();
+			unused(new Task());
 		});
 	});
 
@@ -30,15 +32,15 @@ describe('task', function(){
 		});
 		
 		d.run(function(){
-			task.create({
+			unused(new Task({
 				run: 5
-			});
+			}));
 		});
 
 	});
 
 	it ('should call taskstart event', function(done){
-		var aTask = task.create({
+		var aTask = new Task({
 			run: function (done) {
 				done();
 			},
@@ -52,7 +54,7 @@ describe('task', function(){
 	});
 
 	it ('should autostart', function(done){
-		task.create({
+		unused(new Task({
 			autostart: true,
 			run: function (done) {
 				done();
@@ -62,11 +64,11 @@ describe('task', function(){
 					done();
 				}
 			}
-		});
+		}));
 	});
 
 	it ('should not autostart', function(done){
-		var aTask = task.create({
+		var aTask = new Task({
 			autostart: false,
 			run: function () {
 				return;
@@ -77,7 +79,7 @@ describe('task', function(){
 	});
 
 	it ('should log', function(done){
-		task.create({
+		unused(new Task({
 			autostart: true,
 			run: function (done, log) {
 				log('a task log');
@@ -86,16 +88,15 @@ describe('task', function(){
 				'tasklog': function(log) {
 					assert(log.msg === 'a task log');
 					assert(log.msDuration >= 0);
-					assert(log.date !== undefined);
-					assert(log.date !== null);
+					assert(log.date instanceof Date);
 					done();
 				}
 			}
-		});
+		}));
 	});
 
 	it ('should return a result', function(done){
-		task.create({
+		unused(new Task({
 			autostart: true,
 			run: function (done) {
 				done(5);
@@ -103,32 +104,32 @@ describe('task', function(){
 			listeners: {
 				'taskresult': function(err, result) {
 					assert(err === undefined);
-					assert(result === 5);
+					assert(result.data === 5);
 					done();
 				}
 			}
-		});
+		}));
 	});
 
 	it ('should return a Error', function(done){
-		task.create({
+		unused(new Task({
 			autostart: true,
 			run: function (done) {
 				done(new Error('This is an error'));
 			},
 			listeners: {
 				'taskresult': function(err, result) {
-					assert(err !== undefined);
+					assert(err instanceof Error);
 					assert(err.message === 'This is an error');
 					assert(result === undefined);
 					done();
 				}
 			}
-		});
+		}));
 	});
 
 	it ('should call done event', function(done){
-		task.create({
+		unused(new Task({
 			autostart: true,
 			run: function (done) {
 				done();
@@ -138,7 +139,7 @@ describe('task', function(){
 					done();
 				}
 			}
-		});
+		}));
 	});
 
 	it ('should call start, then log, result and done', function(done){
@@ -149,7 +150,7 @@ describe('task', function(){
 			done: 3
 		},
 		step = 0;
-		task.create({
+		unused(new Task({
 			autostart: true,
 			run: function (done, log) {
 				log('foo');
@@ -157,6 +158,7 @@ describe('task', function(){
 			},
 			listeners: {
 				'taskstart': function() {
+					assert(this.state === 'started');
 					assert(steps.start === step);
 					step++;
 				},
@@ -166,20 +168,22 @@ describe('task', function(){
 					step++;
 				},
 				'taskresult': function(err, result) {
-					assert(result === 10);
+					assert(this.state === 'result');
+					assert(result.data === 10);
 					assert(steps.result === step);
 					step++;
 				},
 				'done': function() {
+					assert(this.state === 'done');
 					assert(steps.done === step);
 					done();
 				}
 			}
-		});
+		}));
 	});
 
 	it ('should timeout', function(done){
-		task.create({
+		unused(new Task({
 			autostart: true,
 			timeout: 10, // ms
 			run: function (done, log) {
@@ -193,11 +197,11 @@ describe('task', function(){
 					done();
 				}
 			}
-		});
+		}));
 	});
 
 	it ('should timeout before run timeout', function(done){
-		task.create({
+		unused(new Task({
 			autostart: true,
 			timeout: 1, // ms
 			run: function (taskDone) {
@@ -207,18 +211,18 @@ describe('task', function(){
 			},
 			listeners: {
 				'taskresult': function(err) {
-					assert(err !== undefined);
+					assert(err instanceof Error);
 					assert(err.message === 'Task timeouted');
 					assert(err.code === 'ETASKTIMEOUTED');
 					assert(err.msDuration >= 1);
 					done();
 				}
 			}
-		});
+		}));
 	});
 
 	it ('should called done on timeout', function(done){
-		task.create({
+		unused(new Task({
 			autostart: true,
 			timeout: 10, // ms
 			run: function (done, log) {
@@ -229,7 +233,100 @@ describe('task', function(){
 					done();
 				}
 			}
-		});
+		}));
 	});
+
+	it ('should have an id', function(done){
+		var t = new Task({
+			id : 'foo',
+			run: function (done, log) {
+				return;
+			}
+		});
+		assert(t.id === 'foo');
+		done();
+	});
+
+	it ('should have an auto id', function(done){
+		var t = new Task({
+			run: function (done, log) {
+				return;
+			}
+		});
+		assert(typeof t.id  === 'number');
+		done();
+	});
+
+	it ('should be disabled', function(done){
+		var t = new Task({
+			disabled: true,
+			run: function (done, log) {
+				assert(false);
+				return;
+			}
+		});
+		t.start();
+		setTimeout(function(){
+			done();
+		}, 10);
+	});
+
+	it ('should have an empty description', function(done){
+		var t = new Task({	
+			run: function (done, log) {
+				return;
+			}
+		});
+		assert(t.description === '');
+		done();
+	});
+
+	it ('should have the description', function(done){
+		var t = new Task({	
+			description: 'foo',
+			run: function (done, log) {
+				return;
+			}
+		});
+		assert(t.description === 'foo');
+		done();
+	});
+
+	it ('should take some time', function(done){
+		unused(new Task({	
+			autostart: true,
+			run: function (taskDone, log) {
+				setTimeout(function(){
+					taskDone(10);
+				}, 20);
+			},
+			listeners: {
+				'taskresult': function(err, result) {
+					assert(result.data === 10);
+					assert(result.msDuration >= 10);
+					assert(result.date instanceof Date);
+					done();
+				}
+			}
+		}));
+	});
+
+	it ('should call run with data', function(done){
+		unused(new Task({	
+			autostart: true,
+			data: 'foo',
+			run: function (data, taskDone, log) {
+				assert(data === 'foo');
+				taskDone(data+'bar');
+			},
+			listeners: {
+				'taskresult': function(err, result) {
+					assert(result.data === 'foobar');
+					done();
+				}
+			}
+		}));
+	});
+	
 });
 
